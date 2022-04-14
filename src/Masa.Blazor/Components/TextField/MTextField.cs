@@ -1,5 +1,6 @@
 ﻿using BlazorComponent.Web;
 using Microsoft.AspNetCore.Components.Web;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Masa.Blazor
 {
@@ -598,23 +599,29 @@ namespace Masa.Blazor
         public virtual async Task HandleOnInputAsync(ChangeEventArgs args)
         {
             _shouldRender = false;
-
-            var success = BindConverter.TryConvertTo<TValue>(args.Value, System.Globalization.CultureInfo.InvariantCulture, out var val);
-            if (success)
+            try
             {
-                _badInput = null;
-                await SetInternalValueAsync(val);
-
-                if (OnInput.HasDelegate)
+                var success = BindConverter.TryConvertTo<TValue>(args.Value, System.Globalization.CultureInfo.InvariantCulture, out var val);
+                if (success)
                 {
-                    await OnInput.InvokeAsync(InternalValue);
+                    _badInput = null;
+                    await SetInternalValueAsync(val);
+
+                    if (OnInput.HasDelegate)
+                    {
+                        await OnInput.InvokeAsync(InternalValue);
+                    }
+                }
+                else
+                {
+                    _badInput = args.Value.ToString();
                 }
             }
-            else
+            catch
             {
                 _badInput = args.Value.ToString();
             }
-
+            
             _shouldRender = true;
             StateHasChanged();
         }
